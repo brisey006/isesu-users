@@ -10,7 +10,6 @@ import { getToken } from '../functions/users';
 
 export const addUser = async (req: Request, res: Response, next: NextFunction) => {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
-    console.log('sflfjf');
     try {
         const userForm = new UserForm(req.body);
         if (userForm.isValid()) {
@@ -36,6 +35,21 @@ export const addUser = async (req: Request, res: Response, next: NextFunction) =
         } else {
             next(formError(userForm.errors));
         }
+    } catch (e) {
+        if (e.code = 11000) {
+            next(systemError('User already exists.'));
+        } else {
+            throw e;
+        }
+    }
+}
+
+export const addUserFromDb = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { firstName, lastName, email, _id, created, password } = req.body;
+        const user = new User({ firstName, lastName, email, password, isVerified: true, _id, createdAt: created });
+        await user.save();
+        res.json(user);
     } catch (e) {
         if (e.code = 11000) {
             next(systemError('User already exists.'));
@@ -129,9 +143,11 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
                 next(systemError('User not found', 404));
             }
         } else {
+            console.log(loginForm.errors);
             next(formError(loginForm.errors));
         }
     } catch (e) {
+        console.log(e.message);
         next(systemError(e.message));
     }
 }
@@ -139,6 +155,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 export const refreshToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const token = getToken(req);
+        console.log(token);
         const tokenAvailable = await RefreshToken.findOne({ token });
 
         if (tokenAvailable) {
@@ -164,6 +181,7 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
         }
         
     } catch (e) {
+        console.log(e.message);
         next(systemError(e.message));
     }
 }
@@ -180,6 +198,15 @@ export const logoutUser = async (req: Request, res: Response, next: NextFunction
 export const getUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = await User.findOne({ _id: req.user.id }).select('-password');
+        res.json(user);
+    } catch (e) {
+        next(systemError(e.message));
+    }
+}
+
+export const getUserById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const user = await User.findOne({ _id: req.params.id }).select('-password');
         res.json(user);
     } catch (e) {
         next(systemError(e.message));
