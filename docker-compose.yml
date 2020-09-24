@@ -1,0 +1,38 @@
+version: '3'
+services:
+  api:
+    container_name: yadahdata
+    restart: always
+    build: 
+      context: ./api
+    links: 
+      - yadahdata_mongo
+    environment: 
+      - DB_PATH=yadahdata_mongo
+      - PORT=5000
+    volumes: 
+      - store:/usr/src/app/public/uploads
+      - node_modules:/usr/src/app/node_modules
+    networks:
+      net:
+        ipv4_address: ${IP_PREFIX}.3
+  yadahdata_mongo:
+    container_name: yadahdata_mongo
+    image: mongo
+    volumes: 
+      - db:/data/db
+    networks: 
+      net:
+        ipv4_address: ${IP_PREFIX}.4
+    ports:
+      - '27017'
+networks: 
+  net:
+    ipam:
+      driver: default
+      config:
+        - subnet: ${IP_PREFIX}.0/16
+volumes: 
+  db:
+  store:
+  node_modules:
