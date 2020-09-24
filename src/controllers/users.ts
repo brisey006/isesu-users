@@ -1,6 +1,7 @@
 import e, { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import sgMail from '@sendgrid/mail';
 import { UserForm, LoginForm } from '../forms';
 import { formError, systemError } from '../functions/errors';
 
@@ -8,12 +9,29 @@ import { User, RefreshToken } from '../models';
 import { getToken } from '../functions/users';
 
 export const addUser = async (req: Request, res: Response, next: NextFunction) => {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
+    console.log('sflfjf');
     try {
         const userForm = new UserForm(req.body);
         if (userForm.isValid()) {
             userForm.hashPassword();
             const user = new User(userForm.data);
             await user.save();
+            
+            const token: string = jwt.sign({
+                id: user._id,
+                exp: Math.floor(Date.now() / 1000) + (60)
+            }, process.env.EMAIL_VERIFICATION_KEY as string);
+            const url = `${process.env.BASE_URL}/verify?token=${token}`;
+            const msg = {
+                to: user.email,
+                from: 'digitalhundred263@gmail.com',
+                subject: 'Verify your ISESU account.',
+                text: 'We are checking if you own this email address.',
+                html: `<h3>Click this link to verify your ISESU account<h3><p>${url}`,
+            };
+            await sgMail.send(msg);
+
             res.json(user);
         } else {
             next(formError(userForm.errors));
@@ -29,15 +47,25 @@ export const addUser = async (req: Request, res: Response, next: NextFunction) =
 
 export const requestVerificationToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        if (req.user.isVerified) {
+        const user = await User.findOne({ _id: req.params.id });
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
+        if (user.isVerified) {
             next(systemError('User already verified.', 406));
         } else {
             const token: string = jwt.sign({
-                id: req.user.id,
+                id: user._id,
                 exp: Math.floor(Date.now() / 1000) + (60)
             }, process.env.EMAIL_VERIFICATION_KEY as string);
             const url = `${process.env.BASE_URL}/verify?token=${token}`;
-            res.json(url);
+            const msg = {
+                to: user.email,
+                from: 'digitalhundred263@gmail.com',
+                subject: 'Verify your ISESU account.',
+                text: 'We are checking if you own this email address.',
+                html: `<h3>Click this link to verify your ISESU account<h3><p>${url}`,
+            };
+            await sgMail.send(msg);
+            res.redirect(`${process.env.FRONT_END_URL as string}/login?verified=A verification link has been successfully sent to ${user.email}`);
         }
     } catch (e) {
         next(systemError(e.message));
@@ -56,7 +84,7 @@ export const verifyUser = async (req: Request, res: Response, next: NextFunction
             } else {
                 const updated = await User.updateOne({ _id: userData.id }, { $set: { isVerified: true } });
                 if (updated.nModified) {
-                    res.sendStatus(201);
+                    res.redirect(`${process.env.FRONT_END_URL as string}/login?verified=Your account has been successfully verified. You can now login to continue`);
                 } else {
                     next(systemError('An error occurred.'));
                 }

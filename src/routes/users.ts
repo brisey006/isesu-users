@@ -5,7 +5,7 @@ import { isAuthenticated } from '../config/auth';
 const router = Router();
 
 router.post('/', addUser);
-router.get('/request-verification-token', isAuthenticated, requestVerificationToken);
+router.get('/request-verification-token/:id', requestVerificationToken);
 router.get('/verify', verifyUser);
 router.post('/login', loginUser);
 router.post('/refresh-token', refreshToken);
