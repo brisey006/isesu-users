@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { addUser, loginUser, refreshToken, logoutUser, getUser, updateUser, requestVerificationToken, verifyUser, addUserFromDb, getUserById } from '../controllers/users';
+import { addUser, loginUser, refreshToken, getUsers, logoutUser, getUser, updateUser, requestVerificationToken, verifyUser, addUserFromDb, getUserById } from '../controllers/users';
 import { isAuthenticated } from '../config/auth';
 
 const router = Router();
 
 router.post('/', addUser);
+router.get('/', getUsers);
 router.post('/add', addUserFromDb);
 router.get('/request-verification-token/:id', requestVerificationToken);
 router.get('/verify', verifyUser);

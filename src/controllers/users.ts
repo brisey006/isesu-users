@@ -229,3 +229,27 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
         next(systemError(e.message));
     }
 }
+
+export const getUsers = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const page: number = req.query.page != undefined ? +req.query.page : 1;
+        const limit: number = req.query.limit != undefined ? +req.query.limit : 20;
+        const query: string = req.query.query != undefined ? req.query.query as string : '';
+        const sortBy: string = req.query.sort != undefined ? req.query.sort as string : 'createdAt';
+        const order = req.query.order != undefined ? req.query.order : 1;
+        
+        const re = new RegExp(query, "gi");
+
+        const users = await User.paginate(
+            {},
+            {
+                limit,
+                page,
+                sort: { [sortBy]: order },
+            }
+        );
+        res.json(users);
+    } catch (e) {
+        next(systemError(e.message));
+    }
+}

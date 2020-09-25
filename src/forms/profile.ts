@@ -6,7 +6,7 @@ export default class ProfileForm {
     gender: string;
     phoneNumber: string;
     address: string;
-    birthDay: string;
+    birthDay?: string;
     
     get errors(): FormError[] {
         return this._errors;

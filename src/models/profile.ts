@@ -5,7 +5,10 @@ const ProfileSchema = new mongoose.Schema({
     gender: String,
     phoneNumber: String,
     address: String,
-    dateOfBirth: Date,
+    dateOfBirth: {
+        type: Date,
+        default: undefined
+    },
     country: String,
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true, unique: true }
 }, {
