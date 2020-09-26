@@ -19,7 +19,7 @@ export const addUser = async (req: Request, res: Response, next: NextFunction) =
             
             const token: string = jwt.sign({
                 id: user._id,
-                exp: Math.floor(Date.now() / 1000) + (60)
+                exp: Math.floor(Date.now() / 1000) + (60 * 60)
             }, process.env.EMAIL_VERIFICATION_KEY as string);
             const url = `${process.env.BASE_URL}/verify?token=${token}`;
             const msg = {
@@ -68,7 +68,7 @@ export const requestVerificationToken = async (req: Request, res: Response, next
         } else {
             const token: string = jwt.sign({
                 id: user._id,
-                exp: Math.floor(Date.now() / 1000) + (60)
+                exp: Math.floor(Date.now() / 1000) + (60 * 60)
             }, process.env.EMAIL_VERIFICATION_KEY as string);
             const url = `${process.env.BASE_URL}/verify?token=${token}`;
             const msg = {
