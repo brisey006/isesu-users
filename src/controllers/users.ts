@@ -216,7 +216,14 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
 export const updateUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const body = req.body;
+        const { firstName, lastName } = body;
         delete body.password;
+        if (!firstName) {
+            delete body.firstName;
+        }
+        if(!lastName) {
+            delete body.lastName;
+        }
         const update = await User.updateOne({ _id: req.user.id }, { $set: body });
         const user = await User.findOne({ _id: req.user.id }).select('-password');
         if (update.nModified) {
